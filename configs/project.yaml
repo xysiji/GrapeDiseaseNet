@@ -1,0 +1,66 @@
+project:
+  name: grape-disease-net
+  task_name: grape_leaf_disease_detection
+  version: 0.1.0
+
+paths:
+  raw_detection_dir: data/grape.yolov8
+  raw_coco_dir: data/grape.coco
+  raw_classification_dir: data/Grapes Leaves Dataset (images)-20260401T131841Z-1-001/Grapes Leaves Dataset (images)
+  processed_detection_dir: data/processed/detection_yolo
+  split_metadata_dir: data/splits
+  models_dir: artifacts/models
+  logs_dir: artifacts/logs
+  predictions_dir: artifacts/predictions
+  reports_dir: artifacts/reports
+
+dataset:
+  task_type: detection
+  class_names:
+    - Black_measles
+    - Black_rot
+    - Blight
+    - downy_mildew
+  image_size: 640
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  random_seed: 42
+
+training:
+  model_name: yolov8n.pt
+  epochs: 100
+  batch_size: 16
+  image_size: 640
+  device: auto
+  workers: 4
+  patience: 20
+  cache: false
+  pretrained: true
+  optimizer: auto
+  amp: true
+  close_mosaic: 10
+  degrees: 0.0
+  fliplr: 0.5
+  flipud: 0.0
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  scale: 0.5
+  mosaic: 1.0
+  mixup: 0.0
+  copy_paste: 0.0
+  fraction: 1.0
+  project_dir: artifacts/logs
+  run_name: yolov8_grape_baseline
+
+inference:
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  save_visualization: true
+  default_weights: ""
+
+ui:
+  window_title: grape_leaf_disease_system
+  minimum_width: 1200
+  minimum_height: 800

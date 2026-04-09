@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grape-disease-net"
+version = "0.1.0"
+description = "Grape leaf disease detection and recognition system based on YOLOv8 and PyQt5."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Codex + User" }
+]
+dependencies = []
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+testpaths = [
+  "tests"
+]
+

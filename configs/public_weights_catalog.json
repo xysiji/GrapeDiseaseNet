@@ -1,0 +1,31 @@
+[
+  {
+    "id": "thesab_grape_leaf_detect_v01",
+    "name": "Grape Leaf Detect v0.1",
+    "framework": "YOLOv5",
+    "task": "detection",
+    "recommended": true,
+    "source_page": "https://huggingface.co/thesab/grape-leaf-disease-detector",
+    "download_url": "https://huggingface.co/thesab/grape-leaf-disease-detector/resolve/main/GrapeLeafDetect_v01.pt?download=true",
+    "classes": [
+      "Grape___Black_rot",
+      "Grape___Esca_(Black_Measles)",
+      "Grape___healthy",
+      "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)"
+    ],
+    "notes": "Best public match for this project. Weight format is YOLOv5 and the project now supports YOLOv5-compatible inference."
+  },
+  {
+    "id": "yasssh2123_grape_seg",
+    "name": "Grape Segmentation Best",
+    "framework": "YOLOv8",
+    "task": "segmentation",
+    "recommended": false,
+    "source_page": "https://huggingface.co/Yasssh2123/Grape",
+    "download_url": "https://huggingface.co/Yasssh2123/Grape/resolve/main/best.pt?download=true",
+    "classes": [
+      "grape"
+    ],
+    "notes": "Public but not recommended for this project because it is a grape segmentation model instead of disease detection."
+  }
+]

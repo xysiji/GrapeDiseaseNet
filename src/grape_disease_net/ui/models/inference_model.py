@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any
 
 from grape_disease_net.common.model_registry import (
@@ -10,9 +12,9 @@ from grape_disease_net.common.model_registry import (
     list_registered_models,
     register_model,
 )
-from grape_disease_net.common.paths import LOGS_DIR, MODELS_DIR, REPORTS_DIR
+from grape_disease_net.common.paths import LOGS_DIR, MODELS_DIR, PREDICTIONS_DIR, REPORTS_DIR, ROOT_DIR
 from grape_disease_net.config import load_config
-from grape_disease_net.inference.predictor import find_default_weights, predict_single_image
+from grape_disease_net.inference.predictor import find_default_weights
 
 
 @dataclass(slots=True)
@@ -30,6 +32,19 @@ class InferenceViewModel:
     def __init__(self, config_path: str | Path | None = None) -> None:
         self.config_path = str(config_path) if config_path else None
         self.config = load_config(config_path)
+        configured_output_dir = str(
+            Path(
+                self.config.get("inference", {}).get(
+                    "default_output_dir",
+                    PREDICTIONS_DIR / "gui_output",
+                )
+            )
+        )
+        output_dir = Path(configured_output_dir)
+        if not output_dir.is_absolute():
+            output_dir = (PREDICTIONS_DIR.parents[1] / output_dir).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        self.default_output_dir = str(output_dir)
         weights_path = ""
         try:
             weights_path = str(find_default_weights(self.config))
@@ -38,6 +53,7 @@ class InferenceViewModel:
 
         self.state = UIState(
             weights_path=weights_path,
+            output_dir=self.default_output_dir,
             device=str(self.config["training"].get("device", "0")),
             conf_threshold=float(self.config["inference"]["conf_threshold"]),
             iou_threshold=float(self.config["inference"]["iou_threshold"]),
@@ -144,18 +160,51 @@ class InferenceViewModel:
 
     def predict(self) -> dict[str, Any]:
         if not self.state.image_path:
-            raise ValueError("Please select an image first.")
+            raise ValueError("请先选择待识别图像。")
         if not self.state.weights_path:
-            raise ValueError("Please select a weights file first.")
-
-        return predict_single_image(
-            config=self.config,
-            image_path=self.state.image_path,
-            weights_path=self.state.weights_path,
-            output_dir=self.state.output_dir or None,
-            conf=self.state.conf_threshold,
-            iou=self.state.iou_threshold,
-            imgsz=self.state.image_size,
-            device=self.state.device,
-            save_visualization=True,
+            raise ValueError("请先选择模型权重文件。")
+        command = [
+            sys.executable,
+            str((ROOT_DIR / "scripts" / "predict_image.py").resolve()),
+            "--config",
+            str(Path(self.config_path).resolve()) if self.config_path else str((ROOT_DIR / "configs" / "project.yaml").resolve()),
+            "--image",
+            self.state.image_path,
+            "--weights",
+            self.state.weights_path,
+            "--output-dir",
+            self.state.output_dir or self.default_output_dir,
+            "--conf",
+            str(self.state.conf_threshold),
+            "--iou",
+            str(self.state.iou_threshold),
+            "--imgsz",
+            str(self.state.image_size),
+            "--device",
+            self.state.device,
+        ]
+        completed = subprocess.run(
+            command,
+            cwd=str(ROOT_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
         )
+        if completed.returncode != 0:
+            message = (completed.stderr or completed.stdout or "未知推理错误").strip()
+            raise RuntimeError(message)
+        return self._extract_prediction_payload(completed.stdout)
+
+    @staticmethod
+    def _extract_prediction_payload(stdout: str) -> dict[str, Any]:
+        text = stdout.strip()
+        if not text:
+            raise RuntimeError("推理进程没有返回结果。")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            start = text.find("{")
+            end = text.rfind("}")
+            if start >= 0 and end > start:
+                return json.loads(text[start : end + 1])
+            raise RuntimeError(f"无法解析推理结果输出：{text}")

@@ -61,7 +61,7 @@ class MainController:
         )
         self.view.update_model_center(self.model.get_model_center_snapshot())
         if state.weights_path:
-            self.view.append_log(f"Default weights loaded: {state.weights_path}")
+            self.view.append_log(f"已加载默认权重：{state.weights_path}")
 
     def handle_open_image(self) -> None:
         path = self.view.choose_image_file()
@@ -69,9 +69,9 @@ class MainController:
             return
         self.model.set_image_path(path)
         self.view.image_path_edit.setText(path)
-        self.view.image_status_label.setText(f"Image: {path}")
+        self.view.image_status_label.setText(f"识别图像：{path}")
         self.view.show_original_image(path)
-        self.view.append_log(f"Image selected: {path}")
+        self.view.append_log(f"已选择图像：{path}")
 
     def handle_open_weights(self) -> None:
         path = self.view.choose_weights_file()
@@ -79,8 +79,8 @@ class MainController:
             return
         self.model.set_weights_path(path)
         self.view.weights_path_edit.setText(path)
-        self.view.weights_status_label.setText(f"Weights: {path}")
-        self.view.append_log(f"Weights selected: {path}")
+        self.view.weights_status_label.setText(f"模型权重：{path}")
+        self.view.append_log(f"已选择权重：{path}")
 
     def handle_import_weights(self) -> None:
         path = self.view.choose_weights_file()
@@ -94,13 +94,13 @@ class MainController:
             set_default=bool(values["set_default_model"]),
         )
         self.view.weights_path_edit.setText(imported["weights_path"])
-        self.view.weights_status_label.setText(f"Weights: {imported['weights_path']}")
+        self.view.weights_status_label.setText(f"模型权重：{imported['weights_path']}")
         self.view.update_model_library(
             self.model.refresh_model_library(),
             selected_weights_path=str(imported["weights_path"]),
         )
         self.view.update_model_center(self.model.get_model_center_snapshot())
-        self.view.append_log(f"Model imported: alias={imported['alias']}")
+        self.view.append_log(f"模型导入完成：别名={imported['alias']}")
 
     def handle_refresh_models(self) -> None:
         self.view.update_model_library(
@@ -108,14 +108,14 @@ class MainController:
             selected_weights_path=self.model.state.weights_path,
         )
         self.view.update_model_center(self.model.get_model_center_snapshot())
-        self.view.append_log("Model library refreshed.")
+        self.view.append_log("模型库已刷新。")
 
     def handle_registered_model_changed(self, weights_path: str) -> None:
         if not weights_path:
             return
         resolved = self.model.select_registered_model(weights_path)
         self.view.weights_path_edit.setText(resolved)
-        self.view.weights_status_label.setText(f"Weights: {resolved}")
+        self.view.weights_status_label.setText(f"模型权重：{resolved}")
 
     def handle_open_output_dir(self) -> None:
         path = self.view.choose_output_directory()
@@ -123,7 +123,7 @@ class MainController:
             return
         self.model.set_output_dir(path)
         self.view.output_dir_edit.setText(path)
-        self.view.append_log(f"Output directory selected: {path}")
+        self.view.append_log(f"已选择输出目录：{path}")
 
     def handle_predict(self) -> None:
         values = self.view.read_form_values()
@@ -138,7 +138,7 @@ class MainController:
         self.model.set_image_size(int(values["image_size"]))
 
         self.view.set_busy(True)
-        self.view.append_log("Prediction started.")
+        self.view.append_log("开始执行识别任务。")
 
         self._thread = QThread()
         self._worker = PredictionWorker(self.model)
@@ -156,9 +156,9 @@ class MainController:
     def _on_prediction_success(self, result: dict) -> None:
         self.view.set_busy(False)
         detections = result["detections"]
-        top_class = str(detections[0]["class_name"]) if detections else "No target"
+        top_class = str(detections[0]["class_name"]) if detections else "未检测到目标"
         self.view.set_result_summary(
-            f"{result['num_detections']} detections, result saved."
+            f"共检测到 {result['num_detections']} 个目标，结果已保存。"
         )
         self.view.set_runtime_summary(
             backend=str(result.get("backend", "unknown")),
@@ -174,24 +174,24 @@ class MainController:
             result_image_path=str(result["visualized_image"]),
             result_json_path=str(result["json_path"]),
         )
-        self.view.append_log(f"Prediction finished: {result['json_path']}")
-        self.view.append_log(f"Detections: {result['num_detections']}")
-        self.view.append_log(f"Backend: {result.get('backend', 'unknown')}")
+        self.view.append_log(f"识别完成：{result['json_path']}")
+        self.view.append_log(f"检测目标数：{result['num_detections']}")
+        self.view.append_log(f"推理后端：{result.get('backend', 'unknown')}")
 
     def _on_prediction_failed(self, message: str) -> None:
         self.view.set_busy(False)
-        self.view.set_result_summary("prediction failed")
-        self.view.append_log(f"Prediction failed: {message}")
+        self.view.set_result_summary("识别失败")
+        self.view.append_log(f"识别失败：{message}")
         self.view.show_error(message)
 
     def handle_clear(self) -> None:
         state = self.model.state
         self.model.set_image_path("")
-        self.model.set_output_dir("")
+        self.model.set_output_dir(self.model.default_output_dir)
         self.view.set_form_values(
             image_path="",
             weights_path=state.weights_path,
-            output_dir="",
+            output_dir=self.model.default_output_dir,
             device=state.device,
             conf=state.conf_threshold,
             iou=state.iou_threshold,

@@ -14,8 +14,12 @@ def launch(config_path: str | Path | None = None) -> int:
     app = QApplication(sys.argv)
     model = InferenceViewModel(config_path=config_path)
     view = MainWindow()
-    MainController(model, view)
-    view.show()
+    controller = MainController(model, view)
+    view._controller = controller
+    view._model = model
+    app._main_window = view
+    app._controller = controller
+    view.showMaximized()
     return app.exec_()
 
 

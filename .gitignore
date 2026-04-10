@@ -9,6 +9,7 @@ artifacts/models/
 artifacts/logs/
 artifacts/predictions/
 artifacts/reports/
+yolo*.pt
 yolov8*.pt
 
 data/processed/

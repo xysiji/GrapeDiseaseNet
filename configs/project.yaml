@@ -32,7 +32,7 @@ training:
   epochs: 100
   batch_size: 16
   image_size: 640
-  device: auto
+  device: 0
   workers: 4
   patience: 20
   cache: false
@@ -58,7 +58,8 @@ inference:
   conf_threshold: 0.25
   iou_threshold: 0.45
   save_visualization: true
-  default_weights: ""
+  default_weights: artifacts/models/grape_yolov8_formal_b16_best.pt
+  default_output_dir: artifacts/predictions/gui_output
 
 ui:
   window_title: grape_leaf_disease_system
